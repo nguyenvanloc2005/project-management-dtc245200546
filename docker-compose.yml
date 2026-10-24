@@ -5,10 +5,9 @@ networks:
     driver: bridge
   backend_net:
     driver: bridge
-    internal: true # Network Isolation cho DB
+    internal: true
 
 services:
-  # Database PostgreSQL
   db:
     image: postgres:15-alpine
     container_name: pm_postgres
@@ -20,7 +19,6 @@ services:
     networks:
       - backend_net
 
-  # Quản lý Database: pgAdmin
   pgadmin:
     image: dpage/pgadmin4
     container_name: pm_pgadmin
@@ -34,7 +32,6 @@ services:
       - frontend_net
       - backend_net
 
-  # Web App Node.js
   web_app:
     build: ./app
     container_name: pm_web_app
@@ -50,7 +47,6 @@ services:
     depends_on:
       - db
 
-  # Nginx Reverse Proxy
   nginx:
     image: nginx:alpine
     container_name: pm_nginx
@@ -66,7 +62,7 @@ services:
     depends_on:
       - web_app
 
-  # Prometheus
+  # --- THÊM CÁC DỊCH VỤ GIÁM SÁT MỚI VÀO ĐÂY ---
   prometheus:
     image: prom/prometheus
     container_name: pm_prometheus
@@ -78,7 +74,6 @@ services:
     networks:
       - frontend_net
 
-  # cAdvisor (Giám sát Container)
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.47.0
     container_name: pm_cadvisor
@@ -91,33 +86,11 @@ services:
     networks:
       - frontend_net
 
-  # Grafana
   grafana:
     image: grafana/grafana
     container_name: pm_grafana
     restart: always
     ports:
       - "3000:3000"
-    networks:
-      - frontend_net
-
-  # Loki
-  loki:
-    image: grafana/loki:2.9.0
-    container_name: pm_loki
-    volumes:
-      - ./loki/loki-config.yml:/etc/loki/loki-config.yml
-    command: -config.file=/etc/loki/loki-config.yml
-    networks:
-      - frontend_net
-
-  # Promtail
-  promtail:
-    image: grafana/promtail:2.9.0
-    container_name: pm_promtail
-    volumes:
-      - ./promtail/promtail-config.yml:/etc/promtail/promtail-config.yml
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-    command: -config.file=/etc/promtail/promtail-config.yml
     networks:
       - frontend_net
